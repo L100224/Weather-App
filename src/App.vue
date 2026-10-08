@@ -82,6 +82,8 @@ const getCurrentLocation = () => {
         lan: latitude,
         lon: longitude
       }
+
+      alert(latitude, longitude, place.name);
     },
     (error) => {
       switch (error.code) {
