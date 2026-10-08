@@ -1044,22 +1044,40 @@ const dailyData = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 15px;
+
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Lightmode */
+  color: #1e293b;
 }
+
+/* =========================================================
+   LIGHTMODE – Standard
+   ========================================================= */
 
 #cities {
   width: 180px;
   height: 38px;
   padding: 0 10px;
+
   border: 1px solid #e2e8f0;
   border-radius: 8px;
+
   background-color: #ffffff;
   color: #334155;
+
   font-weight: 500;
   cursor: pointer;
+
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s,
+    color 0.2s;
 }
 
 #cities:focus {
@@ -1067,11 +1085,18 @@ const dailyData = computed(() => {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
+
+/* =========================================================
+   STUNDENVORHERSAGE
+   ========================================================= */
+
 .weather-box {
   width: 100%;
   display: flex;
   gap: 8px;
+
   padding: 10px 4px;
+
   overflow-x: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -1082,22 +1107,40 @@ const dailyData = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+
   text-align: center;
+
   padding: 14px 10px;
+
   background: #ffffff;
   border: 1px solid #f1f5f9;
   border-radius: 14px;
+
   min-width: 85px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  transition: transform 0.2s, box-shadow 0.2s;
+
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s,
+    border-color 0.2s;
 }
 
 .hour-box:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.08);
 }
 
-/* Texte und Werte */
+
+/* =========================================================
+   TEXTE UND WERTE
+   ========================================================= */
+
 .time {
   font-size: 0.85rem;
   font-weight: 600;
@@ -1108,9 +1151,12 @@ const dailyData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+
   font-size: 1.05rem;
   font-weight: 700;
+
   color: #1e293b;
+
   height: 32px;
 }
 
@@ -1124,32 +1170,53 @@ const dailyData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+
   gap: 3px;
+
   font-size: 0.75rem;
   font-weight: 600;
+
   color: #0284c7;
+
   white-space: nowrap;
 }
+
+
+/* =========================================================
+   SONNENAUFGANG / SONNENUNTERGANG
+   ========================================================= */
 
 .sunrise,
 .sunset {
   border: 1px solid #fef08a;
-  box-shadow: 0 4px 6px -1px rgba(234, 179, 8, 0.05);
+
+  box-shadow:
+    0 4px 6px -1px rgba(234, 179, 8, 0.05);
 }
 
 .sunrise {
-  background: linear-gradient(180deg, #fffdf5 0%, #fefce8 100%);
+  background: linear-gradient(
+    180deg,
+    #fffdf5 0%,
+    #fefce8 100%
+  );
 }
 
 .sunset {
-  background: linear-gradient(180deg, #fffaf8 0%, #ffedd5 100%);
+  background: linear-gradient(
+    180deg,
+    #fffaf8 0%,
+    #ffedd5 100%
+  );
 }
 
 .sun-label {
   display: flex;
   align-items: center;
   justify-content: center;
+
   height: 32px;
+
   font-size: 0.8rem;
   font-weight: 700;
 }
@@ -1162,15 +1229,31 @@ const dailyData = computed(() => {
   color: #ea580c;
 }
 
+
+/* =========================================================
+   AKTUELLE TEMPERATUR
+   ========================================================= */
+
 .current-temp {
   font-size: xx-large;
 }
+
+.current-apparent-temperature {
+  font-size: medium;
+}
+
+
+/* =========================================================
+   7-TAGE-VORHERSAGE
+   ========================================================= */
 
 .daily-weather-box {
   width: 100%;
   display: flex;
   gap: 8px;
+
   padding: 10px 4px;
+
   overflow-x: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -1199,63 +1282,132 @@ const dailyData = computed(() => {
   font-weight: 600;
 }
 
+.daily-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 2px;
+
+  height: 55px;
+}
+
+.daily-icon {
+  width: 42px;
+  height: 42px;
+}
+
+
+/* =========================================================
+   ÜBERSCHRIFTEN
+   ========================================================= */
+
 .forecast-title {
   margin: 5px 4px 0;
   padding-bottom: 6px;
+
   font-size: 1.1rem;
   font-weight: 700;
+
   color: #1e293b;
+
   border-bottom: 1px solid #e2e8f0;
 }
 
-.city-search {
-  width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  box-sizing: border-box;
 
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-
-  font-size: 1rem;
-  outline: none;
-}
-
-.city-search:focus {
-  border-color: #3b82f6;
-}
+/* =========================================================
+   SUCHE
+   ========================================================= */
 
 .search-container {
   position: relative;
   width: 100%;
 }
 
+.search-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.city-search {
+  flex: 1;
+
+  width: 100%;
+  height: 40px;
+
+  padding: 0 12px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  background-color: #ffffff;
+  color: #1e293b;
+
+  font-size: 1rem;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    color 0.2s,
+    box-shadow 0.2s;
+}
+
+.city-search::placeholder {
+  color: #94a3b8;
+}
+
+.city-search:focus {
+  border-color: #3b82f6;
+
+  box-shadow:
+    0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+
+/* =========================================================
+   SUCHERGEBNISSE
+   ========================================================= */
+
 .search-results {
   position: absolute;
+
   top: calc(100% + 5px);
   left: 0;
   right: 0;
 
   z-index: 1000;
 
-  background: white;
+  background: #ffffff;
+
   border: 1px solid #e2e8f0;
   border-radius: 8px;
 
   overflow: hidden;
 
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .search-result {
   display: flex;
   flex-direction: column;
+
   gap: 3px;
 
   padding: 10px 12px;
 
   cursor: pointer;
+
   border-bottom: 1px solid #f1f5f9;
+
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .search-result:last-child {
@@ -1275,32 +1427,15 @@ const dailyData = computed(() => {
   color: #64748b;
 }
 
-.daily-icons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  height: 55px;
-}
 
-.daily-icon {
-  width: 42px;
-  height: 42px;
-}
-
-.search-row {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.city-search {
-  flex: 1;
-}
+/* =========================================================
+   STANDORT-BUTTON
+   ========================================================= */
 
 .location-button {
   width: 42px;
   height: 40px;
+
   flex-shrink: 0;
 
   display: flex;
@@ -1314,11 +1449,13 @@ const dailyData = computed(() => {
   color: #334155;
 
   font-size: 1.1rem;
+
   cursor: pointer;
 
   transition:
     background-color 0.2s,
     border-color 0.2s,
+    color 0.2s,
     transform 0.1s;
 }
 
@@ -1331,7 +1468,268 @@ const dailyData = computed(() => {
   transform: scale(0.95);
 }
 
-.current-apparent-temperature {
-  font-size: medium;
+
+/* =========================================================
+   AUTOMATISCHER DARKMODE
+   Wird anhand der Browser-/Systemeinstellung aktiviert
+   ========================================================= */
+
+@media (prefers-color-scheme: dark) {
+
+  .weather-app {
+    color: #e5e7eb;
+  }
+
+
+  /* -------------------------------------------------------
+     SELECT
+     ------------------------------------------------------- */
+
+  #cities {
+    background-color: #111827;
+    color: #e5e7eb;
+
+    border-color: #374151;
+
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  #cities:focus {
+    border-color: #60a5fa;
+
+    box-shadow:
+      0 0 0 3px rgba(96, 165, 250, 0.15);
+  }
+
+
+  /* -------------------------------------------------------
+     WETTER-KARTEN
+     ------------------------------------------------------- */
+
+  .hour-box {
+    background: #111827;
+
+    border-color: #1f2937;
+
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.25),
+      0 2px 4px -1px rgba(0, 0, 0, 0.18);
+  }
+
+  .hour-box:hover {
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.35);
+  }
+
+
+  /* -------------------------------------------------------
+     TEXTE
+     ------------------------------------------------------- */
+
+  .time {
+    color: #9ca3af;
+  }
+
+  .temperature-box {
+    color: #f3f4f6;
+  }
+
+  .prob-box {
+    color: #38bdf8;
+  }
+
+
+  /* -------------------------------------------------------
+     SONNENAUFGANG / SONNENUNTERGANG
+     ------------------------------------------------------- */
+
+  .sunrise {
+    background: linear-gradient(
+      180deg,
+      #292615 0%,
+      #302d16 100%
+    );
+
+    border-color: #665d22;
+
+    box-shadow:
+      0 4px 6px -1px rgba(234, 179, 8, 0.08);
+  }
+
+  .sunset {
+    background: linear-gradient(
+      180deg,
+      #2d211d 0%,
+      #34241c 100%
+    );
+
+    border-color: #704027;
+
+    box-shadow:
+      0 4px 6px -1px rgba(234, 88, 12, 0.08);
+  }
+
+  .sunrise .sun-label {
+    color: #fbbf24;
+  }
+
+  .sunset .sun-label {
+    color: #fb923c;
+  }
+
+
+  /* -------------------------------------------------------
+     7-TAGE-WERTE
+     ------------------------------------------------------- */
+
+  .temp-max {
+    color: #f3f4f6;
+  }
+
+  .temp-separator {
+    color: #6b7280;
+  }
+
+  .temp-min {
+    color: #9ca3af;
+  }
+
+
+  /* -------------------------------------------------------
+     ÜBERSCHRIFTEN
+     ------------------------------------------------------- */
+
+  .forecast-title {
+    color: #f3f4f6;
+
+    border-bottom-color: #374151;
+  }
+
+
+  /* -------------------------------------------------------
+     SUCHE
+     ------------------------------------------------------- */
+
+  .city-search {
+    background-color: #111827;
+    color: #f3f4f6;
+
+    border-color: #374151;
+  }
+
+  .city-search::placeholder {
+    color: #6b7280;
+  }
+
+  .city-search:focus {
+    border-color: #60a5fa;
+
+    box-shadow:
+      0 0 0 3px rgba(96, 165, 250, 0.15);
+  }
+
+
+  /* -------------------------------------------------------
+     SUCHERGEBNISSE
+     ------------------------------------------------------- */
+
+  .search-results {
+    background: #111827;
+
+    border-color: #374151;
+
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  .search-result {
+    border-bottom-color: #1f2937;
+  }
+
+  .search-result:hover {
+    background: #1f2937;
+  }
+
+  .search-result strong {
+    color: #f3f4f6;
+  }
+
+  .search-result span {
+    color: #9ca3af;
+  }
+
+
+  /* -------------------------------------------------------
+     STANDORT-BUTTON
+     ------------------------------------------------------- */
+
+  .location-button {
+    background: #111827;
+    color: #e5e7eb;
+
+    border-color: #374151;
+  }
+
+  .location-button:hover {
+    background: #1f2937;
+    border-color: #60a5fa;
+  }
+}
+
+
+/* =========================================================
+   REDUZIERTE ANIMATIONEN
+   Respektiert ebenfalls die Systemeinstellung des Nutzers
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .hour-box,
+  .city-search,
+  .location-button,
+  .search-result,
+  #cities {
+    transition: none;
+  }
+
+  .hour-box:hover {
+    transform: none;
+  }
+
+  .weather-box,
+  .daily-weather-box {
+    scroll-behavior: auto;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+
+  .weather-box,
+  .daily-weather-box {
+    scrollbar-color: #4b5563 #111827;
+  }
+
+  .weather-box::-webkit-scrollbar,
+  .daily-weather-box::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .weather-box::-webkit-scrollbar-track,
+  .daily-weather-box::-webkit-scrollbar-track {
+    background: #111827;
+    border-radius: 10px;
+  }
+
+  .weather-box::-webkit-scrollbar-thumb,
+  .daily-weather-box::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 10px;
+  }
+
+  .weather-box::-webkit-scrollbar-thumb:hover,
+  .daily-weather-box::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
 }
 </style>
