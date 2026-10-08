@@ -69,21 +69,20 @@ const getCurrentLocation = () => {
       const longitude = position.coords.longitude
 
       // Koordinaten in einen Ortsnamen umwandeln
-      const response = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=de&format=json`
-      )
+      // const response = await fetch(
+      //   `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=de&format=json`
+      // )
 
-      const data = await response.json()
+      // const data = await response.json()
 
-      const place = data.results?.[0]
+      // const place = data.results?.[0]
 
       selectedCity.value = {
-        name: place?.name || 'Mein Standort',
+        name: 'Mein Standort',
         lan: latitude,
         lon: longitude
       }
 
-      alert(latitude, longitude, place.name);
     },
     (error) => {
       switch (error.code) {
