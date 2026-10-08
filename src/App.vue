@@ -57,6 +57,8 @@ const selectSearchCity = (city) => {
   searchResults.value = []
 }
 
+
+
 const getCurrentLocation = () => {
   if (!navigator.geolocation) {
     alert('Dein Browser unterstützt keine Standortbestimmung.')
@@ -67,23 +69,47 @@ const getCurrentLocation = () => {
     async (position) => {
       const latitude = position.coords.latitude
       const longitude = position.coords.longitude
+      try {
+        // Koordinaten in Ortsnamen umwandeln
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=jsonv2&zoom=10&addressdetails=1&accept-language=de`
+        )
 
-      // Koordinaten in einen Ortsnamen umwandeln
-      // const response = await fetch(
-      //   `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=de&format=json`
-      // )
+        if (!response.ok) {
+          throw new Error('Nominatim Anfrage fehlgeschlagen')
+        }
 
-      // const data = await response.json()
+        const data = await response.json()
+        const address = data.address || {}
 
-      // const place = data.results?.[0]
+        // Den passendsten Ortsnamen auswählen
+        const locationName =
+          address.city ||
+          address.town ||
+          address.village ||
+          address.municipality ||
+          address.hamlet ||
+          address.county ||
+          'Unbekannter Standort'
 
-      selectedCity.value = {
-        name: 'Mein Standort',
-        lan: latitude,
-        lon: longitude
+        selectedCity.value = {
+          name: locationName,
+          lan: latitude,
+          lon: longitude
+        }
+
+      } catch (error) {
+        console.error('Fehler beim Ermitteln des Ortsnamens:', error)
+
+        // Standort trotzdem verwenden, falls Nominatim nicht erreichbar ist
+        selectedCity.value = {
+          name: 'Mein Standort',
+          lan: latitude,
+          lon: longitude
+        }
       }
-
     },
+
     (error) => {
       switch (error.code) {
         case error.PERMISSION_DENIED:
@@ -102,6 +128,7 @@ const getCurrentLocation = () => {
           alert('Der Standort konnte nicht ermittelt werden.')
       }
     },
+
     {
       enableHighAccuracy: true,
       timeout: 10000,
@@ -109,7 +136,6 @@ const getCurrentLocation = () => {
     }
   )
 }
-
 
 const weatherDescriptions = {
   // Klar / Wolken
