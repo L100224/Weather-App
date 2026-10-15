@@ -98,15 +98,30 @@ const selectSearchCity = (city) => {
 }
 
 // Standort ermitteln (auf Knopfdruck oder beim Start)
+// Standort ermitteln (auf Knopfdruck oder beim Start)
 const fetchGeolocation = (isStartup = false) => {
+
   if (!navigator.geolocation) {
     if (!isStartup) alert('Dein Browser unterstützt keine Standortbestimmung.');
     if (!selectedCity.value) loadFallbackCity();
     return;
   }
 
+  // Sicherheits-Timeout, falls der Browser komplett blockiert und weder success noch error feuert
+  let locationResolved = false;
+  const safetyTimer = setTimeout(() => {
+    if (!locationResolved) {
+      if (!isStartup) {
+        alert('Standort-Abfrage dauerhaft blockiert oder fehlgeschlagen. Bitte prüfe die Browsereinstellungen.');
+      }
+      if (!selectedCity.value) loadFallbackCity();
+    }
+  }, 8000);
+
   navigator.geolocation.getCurrentPosition(
     async (position) => {
+      locationResolved = true;
+      clearTimeout(safetyTimer);
       localStorage.setItem('weather_loc_permission', 'granted');
 
       const latitude = position.coords.latitude;
@@ -121,24 +136,32 @@ const fetchGeolocation = (isStartup = false) => {
         const address = data.address || {};
         locationName = address.city || address.town || address.village || address.municipality || 'Mein Standort';
       } catch (e) {
-        console.error(e);
+        console.error("Reverse Geocoding Fehler:", e);
       }
 
       const newStdCity = { name: locationName, lan: latitude, lon: longitude, isPin: true };
       currentStandardCity.value = newStdCity;
       localStorage.setItem('weather_standard_city', JSON.stringify(newStdCity));
 
-      // Wenn das die erste Initialisierung ist oder der Nutzer den Pin aktiv gedrückt hat
       if (isStartup && !localStorage.getItem('weather_last_opened_city')) {
+        setAndSaveCurrentCity(newStdCity);
+      } else if (!isStartup) {
+        // Wenn manuell geklickt, direkt dorthin wechseln!
         setAndSaveCurrentCity(newStdCity);
       }
     },
     (error) => {
+      locationResolved = true;
+      clearTimeout(safetyTimer);
       localStorage.setItem('weather_loc_permission', 'denied');
-      if (!isStartup) alert('Standort konnte nicht ermittelt werden.');
+      console.error("Geolocation Fehler-Code:", error.code, error.message);
+      
+      if (!isStartup) {
+        alert('Standort konnte nicht ermittelt werden. Fehler: ' + error.message);
+      }
       if (!selectedCity.value) loadFallbackCity();
     },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+    { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 }
   );
 };
 
@@ -1188,59 +1211,18 @@ const dailyData = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 15px;
-
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-
-  /* Lightmode */
   color: #1e293b;
 }
 
 /* =========================================================
-   LIGHTMODE – Standard
-   ========================================================= */
-
-#cities {
-  width: 180px;
-  height: 38px;
-  padding: 0 10px;
-
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-
-  background-color: #ffffff;
-  color: #334155;
-
-  font-weight: 500;
-  cursor: pointer;
-
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-
-  outline: none;
-
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    background-color 0.2s,
-    color 0.2s;
-}
-
-#cities:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-
-/* =========================================================
    STUNDENVORHERSAGE
    ========================================================= */
-
 .weather-box {
   width: 100%;
   display: flex;
   gap: 8px;
-
   padding: 10px 4px;
-
   overflow-x: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -1251,39 +1233,20 @@ const dailyData = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-
   text-align: center;
-
   padding: 14px 10px;
-
   background: #ffffff;
   border: 1px solid #f1f5f9;
   border-radius: 14px;
-
   min-width: 85px;
-
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 2px 4px -1px rgba(0, 0, 0, 0.03);
-
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s,
-    background-color 0.2s,
-    border-color 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
 }
 
 .hour-box:hover {
   transform: translateY(-2px);
-
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
 }
-
-
-/* =========================================================
-   TEXTE UND WERTE
-   ========================================================= */
 
 .time {
   font-size: 0.85rem;
@@ -1295,12 +1258,9 @@ const dailyData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-
   font-size: 1.05rem;
   font-weight: 700;
-
   color: #1e293b;
-
   height: 32px;
 }
 
@@ -1314,49 +1274,35 @@ const dailyData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-
   gap: 3px;
-
   font-size: 0.75rem;
   font-weight: 600;
-
   color: #0284c7;
-
   white-space: nowrap;
 }
-
 
 /* =========================================================
    SONNENAUFGANG / SONNENUNTERGANG
    ========================================================= */
-
 .sunrise,
 .sunset {
   border: 1px solid #fef08a;
-
-  box-shadow:
-    0 4px 6px -1px rgba(234, 179, 8, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(234, 179, 8, 0.05);
 }
 
 .sunrise {
-  background: linear-gradient(180deg,
-      #fffdf5 0%,
-      #fefce8 100%);
+  background: linear-gradient(180deg, #fffdf5 0%, #fefce8 100%);
 }
 
 .sunset {
-  background: linear-gradient(180deg,
-      #fffaf8 0%,
-      #ffedd5 100%);
+  background: linear-gradient(180deg, #fffaf8 0%, #ffedd5 100%);
 }
 
 .sun-label {
   display: flex;
   align-items: center;
   justify-content: center;
-
   height: 32px;
-
   font-size: 0.8rem;
   font-weight: 700;
 }
@@ -1369,11 +1315,6 @@ const dailyData = computed(() => {
   color: #ea580c;
 }
 
-
-/* =========================================================
-   AKTUELLE TEMPERATUR
-   ========================================================= */
-
 .current-temp {
   font-size: xx-large;
 }
@@ -1382,18 +1323,14 @@ const dailyData = computed(() => {
   font-size: medium;
 }
 
-
 /* =========================================================
    7-TAGE-VORHERSAGE
    ========================================================= */
-
 .daily-weather-box {
   width: 100%;
   display: flex;
   gap: 8px;
-
   padding: 10px 4px;
-
   overflow-x: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -1426,9 +1363,7 @@ const dailyData = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-
   gap: 2px;
-
   height: 55px;
 }
 
@@ -1437,28 +1372,18 @@ const dailyData = computed(() => {
   height: 42px;
 }
 
-
-/* =========================================================
-   ÜBERSCHRIFTEN
-   ========================================================= */
-
 .forecast-title {
   margin: 5px 4px 0;
   padding-bottom: 6px;
-
   font-size: 1.1rem;
   font-weight: 700;
-
   color: #1e293b;
-
   border-bottom: 1px solid #e2e8f0;
 }
 
-
 /* =========================================================
-   SUCHE
+   SUCHE & MENÜ (Lightmode)
    ========================================================= */
-
 .search-container {
   position: relative;
   width: 100%;
@@ -1472,29 +1397,17 @@ const dailyData = computed(() => {
 
 .city-search {
   flex: 1;
-
   width: 100%;
   height: 40px;
-
   padding: 0 12px;
-
   box-sizing: border-box;
-
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-
   background-color: #ffffff;
   color: #1e293b;
-
   font-size: 1rem;
-
   outline: none;
-
-  transition:
-    border-color 0.2s,
-    background-color 0.2s,
-    color 0.2s,
-    box-shadow 0.2s;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 .city-search::placeholder {
@@ -1503,51 +1416,30 @@ const dailyData = computed(() => {
 
 .city-search:focus {
   border-color: #3b82f6;
-
-  box-shadow:
-    0 0 0 3px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
-
-
-/* =========================================================
-   SUCHERGEBNISSE
-   ========================================================= */
 
 .search-results {
   position: absolute;
-
   top: calc(100% + 5px);
   left: 0;
   right: 0;
-
   z-index: 1000;
-
   background: #ffffff;
-
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-
   overflow: hidden;
-
-  box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 .search-result {
   display: flex;
   flex-direction: column;
-
   gap: 3px;
-
   padding: 10px 12px;
-
   cursor: pointer;
-
   border-bottom: 1px solid #f1f5f9;
-
-  transition:
-    background-color 0.15s,
-    color 0.15s;
+  transition: background-color 0.15s, color 0.15s;
 }
 
 .search-result:last-child {
@@ -1567,36 +1459,20 @@ const dailyData = computed(() => {
   color: #64748b;
 }
 
-
-/* =========================================================
-   STANDORT-BUTTON
-   ========================================================= */
-
 .location-button {
   width: 42px;
   height: 40px;
-
   flex-shrink: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-
   background: #ffffff;
   color: #334155;
-
   font-size: 1.1rem;
-
   cursor: pointer;
-
-  transition:
-    background-color 0.2s,
-    border-color 0.2s,
-    color 0.2s,
-    transform 0.1s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
 }
 
 .location-button:hover {
@@ -1607,271 +1483,6 @@ const dailyData = computed(() => {
 .location-button:active {
   transform: scale(0.95);
 }
-
-
-/* =========================================================
-   AUTOMATISCHER DARKMODE
-   Wird anhand der Browser-/Systemeinstellung aktiviert
-   ========================================================= */
-
-@media (prefers-color-scheme: dark) {
-
-  .weather-app {
-    color: #e5e7eb;
-  }
-
-
-  /* -------------------------------------------------------
-     SELECT
-     ------------------------------------------------------- */
-
-  #cities {
-    background-color: #111827;
-    color: #e5e7eb;
-
-    border-color: #374151;
-
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-
-  #cities:focus {
-    border-color: #60a5fa;
-
-    box-shadow:
-      0 0 0 3px rgba(96, 165, 250, 0.15);
-  }
-
-
-  /* -------------------------------------------------------
-     WETTER-KARTEN
-     ------------------------------------------------------- */
-
-  .hour-box {
-    background: #111827;
-
-    border-color: #1f2937;
-
-    box-shadow:
-      0 4px 6px -1px rgba(0, 0, 0, 0.25),
-      0 2px 4px -1px rgba(0, 0, 0, 0.18);
-  }
-
-  .hour-box:hover {
-    box-shadow:
-      0 10px 15px -3px rgba(0, 0, 0, 0.35);
-  }
-
-
-  /* -------------------------------------------------------
-     TEXTE
-     ------------------------------------------------------- */
-
-  .time {
-    color: #9ca3af;
-  }
-
-  .temperature-box {
-    color: #f3f4f6;
-  }
-
-  .prob-box {
-    color: #38bdf8;
-  }
-
-
-  /* -------------------------------------------------------
-     SONNENAUFGANG / SONNENUNTERGANG
-     ------------------------------------------------------- */
-
-  .sunrise {
-    background: linear-gradient(180deg,
-        #292615 0%,
-        #302d16 100%);
-
-    border-color: #665d22;
-
-    box-shadow:
-      0 4px 6px -1px rgba(234, 179, 8, 0.08);
-  }
-
-  .sunset {
-    background: linear-gradient(180deg,
-        #2d211d 0%,
-        #34241c 100%);
-
-    border-color: #704027;
-
-    box-shadow:
-      0 4px 6px -1px rgba(234, 88, 12, 0.08);
-  }
-
-  .sunrise .sun-label {
-    color: #fbbf24;
-  }
-
-  .sunset .sun-label {
-    color: #fb923c;
-  }
-
-
-  /* -------------------------------------------------------
-     7-TAGE-WERTE
-     ------------------------------------------------------- */
-
-  .temp-max {
-    color: #f3f4f6;
-  }
-
-  .temp-separator {
-    color: #6b7280;
-  }
-
-  .temp-min {
-    color: #9ca3af;
-  }
-
-
-  /* -------------------------------------------------------
-     ÜBERSCHRIFTEN
-     ------------------------------------------------------- */
-
-  .forecast-title {
-    color: #f3f4f6;
-
-    border-bottom-color: #374151;
-  }
-
-
-  /* -------------------------------------------------------
-     SUCHE
-     ------------------------------------------------------- */
-
-  .city-search {
-    background-color: #111827;
-    color: #f3f4f6;
-
-    border-color: #374151;
-  }
-
-  .city-search::placeholder {
-    color: #6b7280;
-  }
-
-  .city-search:focus {
-    border-color: #60a5fa;
-
-    box-shadow:
-      0 0 0 3px rgba(96, 165, 250, 0.15);
-  }
-
-
-  /* -------------------------------------------------------
-     SUCHERGEBNISSE
-     ------------------------------------------------------- */
-
-  .search-results {
-    background: #111827;
-
-    border-color: #374151;
-
-    box-shadow:
-      0 12px 30px rgba(0, 0, 0, 0.45);
-  }
-
-  .search-result {
-    border-bottom-color: #1f2937;
-  }
-
-  .search-result:hover {
-    background: #1f2937;
-  }
-
-  .search-result strong {
-    color: #f3f4f6;
-  }
-
-  .search-result span {
-    color: #9ca3af;
-  }
-
-
-  /* -------------------------------------------------------
-     STANDORT-BUTTON
-     ------------------------------------------------------- */
-
-  .location-button {
-    background: #111827;
-    color: #e5e7eb;
-
-    border-color: #374151;
-  }
-
-  .location-button:hover {
-    background: #1f2937;
-    border-color: #60a5fa;
-  }
-}
-
-
-/* =========================================================
-   REDUZIERTE ANIMATIONEN
-   Respektiert ebenfalls die Systemeinstellung des Nutzers
-   ========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-  .hour-box,
-  .city-search,
-  .location-button,
-  .search-result,
-  #cities {
-    transition: none;
-  }
-
-  .hour-box:hover {
-    transform: none;
-  }
-
-  .weather-box,
-  .daily-weather-box {
-    scroll-behavior: auto;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-
-  .weather-box,
-  .daily-weather-box {
-    scrollbar-color: #4b5563 #111827;
-  }
-
-  .weather-box::-webkit-scrollbar,
-  .daily-weather-box::-webkit-scrollbar {
-    height: 8px;
-  }
-
-  .weather-box::-webkit-scrollbar-track,
-  .daily-weather-box::-webkit-scrollbar-track {
-    background: #111827;
-    border-radius: 10px;
-  }
-
-  .weather-box::-webkit-scrollbar-thumb,
-  .daily-weather-box::-webkit-scrollbar-thumb {
-    background: #4b5563;
-    border-radius: 10px;
-  }
-
-  .weather-box::-webkit-scrollbar-thumb:hover,
-  .daily-weather-box::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
-  }
-}
-
-/* =========================================================
-   NEUES MOBILE-OPTIMIERTES MENÜ & TOP-BAR
-   ========================================================= */
 
 .app-top-bar {
   display: flex;
@@ -1916,6 +1527,10 @@ const dailyData = computed(() => {
   animation: fadeInOverlay 0.25s ease forwards;
 }
 
+.side-menu-overlay.closing {
+  animation: fadeOutOverlay 0.2s ease forwards;
+}
+
 .side-menu {
   width: 85%;
   max-width: 340px;
@@ -1931,24 +1546,28 @@ const dailyData = computed(() => {
   animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes fadeInOverlay {
-  from {
-    background: rgba(0, 0, 0, 0);
-  }
+.side-menu.closing {
+  animation: slideOutLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
-  to {
-    background: rgba(0, 0, 0, 0.4);
-  }
+@keyframes fadeInOverlay {
+  from { background: rgba(0, 0, 0, 0); }
+  to { background: rgba(0, 0, 0, 0.4); }
+}
+
+@keyframes fadeOutOverlay {
+  from { background: rgba(0, 0, 0, 0.4); }
+  to { background: rgba(0, 0, 0, 0); }
 }
 
 @keyframes slideInLeft {
-  from {
-    transform: translateX(-100%);
-  }
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
 
-  to {
-    transform: translateX(0);
-  }
+@keyframes slideOutLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
 
 .menu-separator {
@@ -1956,30 +1575,6 @@ const dailyData = computed(() => {
   background-color: #e2e8f0;
   width: 100%;
   margin: 4px 0;
-}
-
-/* Suchergebnis Element mit Plus-Button */
-.search-result-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid #f1f5f9;
-  cursor: pointer;
-}
-
-.search-result-item:hover {
-  background: #f8fafc;
-}
-
-.search-result-item strong {
-  display: block;
-  color: #1e293b;
-}
-
-.search-result-item span {
-  font-size: 0.75rem;
-  color: #64748b;
 }
 
 .add-quick-btn {
@@ -2003,7 +1598,6 @@ const dailyData = computed(() => {
   border-color: #3b82f6;
 }
 
-/* Stadt-Zeilen im Menü */
 .menu-city-row {
   display: flex;
   align-items: center;
@@ -2031,15 +1625,6 @@ const dailyData = computed(() => {
   font-size: 0.95rem;
 }
 
-.badge-label {
-  font-size: 0.65rem;
-  background: #e0f2fe;
-  color: #0369a1;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
 .saved-cities-container {
   display: flex;
   flex-direction: column;
@@ -2055,7 +1640,6 @@ const dailyData = computed(() => {
   font-style: italic;
 }
 
-/* 3-Punkt Menü */
 .dropdown-wrapper {
   position: relative;
 }
@@ -2097,119 +1681,8 @@ const dailyData = computed(() => {
   background: #fef2f2;
 }
 
-/* Darkmode Anpassungen für das Menü */
-@media (prefers-color-scheme: dark) {
-  .side-menu {
-    background: #111827;
-  }
-
-  .menu-separator {
-    background-color: #374151;
-  }
-
-  .city-name {
-    color: #f3f4f6;
-  }
-
-  .search-result-item {
-    border-bottom-color: #1f2937;
-  }
-
-  .search-result-item:hover,
-  .menu-city-row:hover {
-    background: #1f2937;
-  }
-
-  .search-result-item strong {
-    color: #f3f4f6;
-  }
-
-  .badge-label {
-    background: #082f49;
-    color: #38bdf8;
-  }
-
-  .add-quick-btn {
-    background: #1f2937;
-    border-color: #374151;
-    color: #9ca3af;
-  }
-
-  .add-quick-btn:hover {
-    background: #3b82f6;
-    color: white;
-  }
-
-  .dropdown-popup {
-    background: #1f2937;
-    border-color: #374151;
-  }
-
-  .dropdown-popup button:hover {
-    background: #451a03;
-  }
-}
-
-/* Animationen für Öffnen und Schließen */
-.side-menu-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 3000;
-  display: flex;
-  justify-content: flex-start;
-  animation: fadeInOverlay 0.25s ease forwards;
-}
-
-.side-menu-overlay.closing {
-  animation: fadeOutOverlay 0.2s ease forwards;
-}
-
-.side-menu {
-  width: 85%;
-  max-width: 340px;
-  height: 100%;
-  background: #ffffff;
-  box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-  padding: 20px 15px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow-y: auto;
-  animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.side-menu.closing {
-  animation: slideOutLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes fadeInOverlay {
-  from { background: rgba(0, 0, 0, 0); }
-  to { background: rgba(0, 0, 0, 0.4); }
-}
-
-@keyframes fadeOutOverlay {
-  from { background: rgba(0, 0, 0, 0.4); }
-  to { background: rgba(0, 0, 0, 0); }
-}
-
-@keyframes slideInLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-
-@keyframes slideOutLeft {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
-}
-
-/* Fester Platzhalter für den Badge-Bereich ganz oben in jeder Kachel */
 .badge-wrapper {
-  height: 10px; /* Entspricht der exakten Höhe des Badges inklusive Abstände */
+  height: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2228,11 +1701,212 @@ const dailyData = computed(() => {
   line-height: 1.2;
 }
 
-/* Darkmode Anpassung */
+
+/* =========================================================
+   AUTOMATISCHER DARKMODE
+   ========================================================= */
 @media (prefers-color-scheme: dark) {
+  .weather-app {
+    color: #e5e7eb;
+  }
+
+  .hour-box {
+    background: #111827;
+    border-color: #1f2937;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 0, 0, 0.18);
+  }
+
+  .hour-box:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.35);
+  }
+
+  .time {
+    color: #9ca3af;
+  }
+
+  .temperature-box {
+    color: #f3f4f6;
+  }
+
+  .prob-box {
+    color: #38bdf8;
+  }
+
+  .sunrise {
+    background: linear-gradient(180deg, #292615 0%, #302d16 100%);
+    border-color: #665d22;
+  }
+
+  .sunset {
+    background: linear-gradient(180deg, #2d211d 0%, #34241c 100%);
+    border-color: #704027;
+  }
+
+  .sunrise .sun-label {
+    color: #fbbf24;
+  }
+
+  .sunset .sun-label {
+    color: #fb923c;
+  }
+
+  .temp-max {
+    color: #f3f4f6;
+  }
+
+  .temp-separator {
+    color: #6b7280;
+  }
+
+  .temp-min {
+    color: #9ca3af;
+  }
+
+  .forecast-title {
+    color: #f3f4f6;
+    border-bottom-color: #374151;
+  }
+
+  .city-search {
+    background-color: #111827;
+    color: #f3f4f6;
+    border-color: #374151;
+  }
+
+  .city-search::placeholder {
+    color: #6b7280;
+  }
+
+  .city-search:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+  }
+
+  .search-results {
+    background: #111827;
+    border-color: #374151;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  .search-result {
+    border-bottom-color: #1f2937;
+  }
+
+  .search-result:hover {
+    background: #1f2937;
+  }
+
+  .search-result strong {
+    color: #f3f4f6;
+  }
+
+  .search-result span {
+    color: #9ca3af;
+  }
+
+  .location-button {
+    background: #111827;
+    color: #e5e7eb;
+    border-color: #374151;
+  }
+
+  .location-button:hover {
+    background: #1f2937;
+    border-color: #60a5fa;
+  }
+
+  /* Menü & Dropdowns im Darkmode */
+  .side-menu {
+    background: #111827 !important;
+  }
+
+  .menu-separator {
+    background-color: #374151;
+  }
+
+  .city-name {
+    color: #f3f4f6;
+  }
+
+  .menu-city-row:hover {
+    background: #1f2937;
+  }
+
+  .add-quick-btn {
+    background: #1f2937;
+    border-color: #374151;
+    color: #9ca3af;
+  }
+
+  .add-quick-btn:hover {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .dropdown-popup {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+  }
+
+  .dropdown-popup button {
+    color: #f87171;
+  }
+
+  .dropdown-popup button:hover {
+    background: #374151 !important;
+  }
+
   .day-badge {
     background: #082f49;
     color: #38bdf8;
+  }
+
+  .weather-box,
+  .daily-weather-box {
+    scrollbar-color: #4b5563 #111827;
+  }
+
+  .weather-box::-webkit-scrollbar,
+  .daily-weather-box::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .weather-box::-webkit-scrollbar-track,
+  .daily-weather-box::-webkit-scrollbar-track {
+    background: #111827;
+    border-radius: 10px;
+  }
+
+  .weather-box::-webkit-scrollbar-thumb,
+  .daily-weather-box::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 10px;
+  }
+
+  .weather-box::-webkit-scrollbar-thumb:hover,
+  .daily-weather-box::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+  }
+}
+
+/* =========================================================
+   REDUZIERTE ANIMATIONEN
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  .hour-box,
+  .city-search,
+  .location-button,
+  .search-result {
+    transition: none;
+  }
+
+  .hour-box:hover {
+    transform: none;
+  }
+
+  .weather-box,
+  .daily-weather-box {
+    scroll-behavior: auto;
   }
 }
 </style>
