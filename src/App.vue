@@ -1115,7 +1115,7 @@ const dailyData = computed(() => {
       }}{{
           weather.hourly_units.temperature_2m }}</span>
     </div>
-    <h2 class="forecast-title">24-Stunden-Vorhersage</h2>
+    <h2 class="forecast-title">48-Stunden-Vorhersage</h2>
 
     <div v-if="weather" class="weather-box">
       <div v-for="(hour, index) in hourlyData" :key="index" class="hour-box" :class="hour.type">
@@ -1630,6 +1630,7 @@ const dailyData = computed(() => {
   flex-direction: column;
   gap: 4px;
   overflow-y: auto;
+  padding-bottom: 30px;
 }
 
 .no-cities-hint {
