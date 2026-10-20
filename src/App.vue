@@ -943,87 +943,102 @@ const hourlyData = computed(() => {
   return list;
 });
 
-const dailyData = computed(() => {
-  if (!weather.value?.daily || !weather.value?.hourly) {
-    return [];
+// Hilfsfunktion: Ermittelt das passende Icon anhand von Phänomen (Gewitter/Schnee) oder Regenmenge
+const getPeriodWeatherIcon = (indices, isDay) => {
+  if (!indices?.length || !weather.value?.hourly) return null;
+
+  const hourly = weather.value.hourly;
+  const codes = indices.map(i => hourly.weather_code[i]);
+  const totalPrecip = indices.reduce((sum, i) => sum + (hourly.precipitation[i] || 0), 0);
+  const avgClouds = indices.reduce((sum, i) => sum + (hourly.cloud_cover?.[i] || 50), 0) / indices.length;
+
+  // 1. Priorität: GEWITTER (WMO 95, 96, 97, 99)
+  const thunderCode = codes.find(c => [95, 96, 97, 99].includes(c));
+  if (thunderCode) {
+    return getWeatherIcon(thunderCode, isDay, totalPrecip, avgClouds);
   }
+
+  // 2. Priorität: SCHNEE (WMO 71, 73, 75, 77, 85, 86)
+  const snowCode = codes.find(c => [71, 73, 75, 77, 85, 86].includes(c));
+  if (snowCode && totalPrecip >= 0.2) {
+    if (totalPrecip >= 4.0) return getWeatherIcon(75, isDay); // starker Schnee
+    if (totalPrecip >= 1.5) return getWeatherIcon(73, isDay); // mäßiger Schnee
+    return getWeatherIcon(71, isDay);                         // leichter Schnee
+  }
+
+  // 3. Priorität: REGEN NACH MENGE (Schwellenwert-Logik)
+  if (totalPrecip >= 5.0) {
+    // Starker Regen
+    return getWeatherIcon(65, isDay, totalPrecip, avgClouds);
+  } else if (totalPrecip >= 1.5) {
+    // Mäßiger Regen
+    return getWeatherIcon(63, isDay, totalPrecip, avgClouds);
+  } else if (totalPrecip >= 0.2) {
+    // Leichter Regen / Nieselregen
+    return getWeatherIcon(61, isDay, totalPrecip, avgClouds);
+  }
+
+  // 4. Priorität: NEBEL (WMO 45, 48)
+  const fogCount = codes.filter(c => [45, 48].includes(c)).length;
+  if (fogCount / codes.length >= 0.4) {
+    return getWeatherIcon(45, isDay, 0, avgClouds);
+  }
+
+  // 5. TROCKEN -> Nach durchschnittlicher Bewölkung bestimmen
+  // 0: Klar (< 20%), 1: Überwiegend klar (< 40%), 2: Bewölkt (< 70%), 3: Bedeckt (>= 70%)
+  if (avgClouds < 20) return getWeatherIcon(0, isDay);
+  if (avgClouds < 50) return getWeatherIcon(1, isDay);
+  if (avgClouds < 80) return getWeatherIcon(2, isDay);
+  return getWeatherIcon(3, isDay);
+};
+
+const dailyData = computed(() => {
+  if (!weather.value?.daily || !weather.value?.hourly) return [];
 
   const daily = weather.value.daily;
   const hourly = weather.value.hourly;
 
-  return daily.time.slice(0, 8).map((date, dayIndex) => {
+  return daily.time.slice(0, 7).map((date, dayIndex) => {
+    const sunrise = daily.sunrise[dayIndex];
+    const sunset = daily.sunset[dayIndex];
+    const nextSunrise = daily.sunrise[dayIndex + 1] || 
+      new Date(new Date(sunrise).getTime() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
     const dayIndices = [];
+    const nightIndices = [];
 
-    hourly.time.forEach((time, index) => {
-      if (
-        time.startsWith(date) &&
-        hourly.is_day[index] === 1
-      ) {
+    hourly.time.forEach((timeStr, index) => {
+      if (timeStr >= sunrise && timeStr < sunset) {
         dayIndices.push(index);
+      }
+      else if (timeStr >= sunset && timeStr < nextSunrise) {
+        nightIndices.push(index);
       }
     });
 
-    const nightIndices = [];
+    const dayRain = dayIndices.reduce((sum, idx) => sum + (hourly.precipitation[idx] || 0), 0);
+    const nightRain = nightIndices.reduce((sum, idx) => sum + (hourly.precipitation[idx] || 0), 0);
+    
+    const totalPeriodRain = Math.round((dayRain + nightRain) * 10) / 10;
 
-    const sunset = daily.sunset[dayIndex];
-    const nextSunrise = daily.sunrise[dayIndex + 1];
+    const dayIcon = getPeriodWeatherIcon(dayIndices, 1);
+    const nightIcon = getPeriodWeatherIcon(nightIndices, 0);
 
-    if (sunset && nextSunrise) {
-
-      hourly.time.forEach((time, index) => {
-
-        if (
-          time >= sunset &&
-          time < nextSunrise &&
-          hourly.is_day[index] === 0
-        ) {
-          nightIndices.push(index);
-        }
-
-      });
-
-    }
-
-    const dayIcon = getIconForPeriod(dayIndices, 1);
-
-    const nightIcon = getIconForPeriod(
-      nightIndices,
-      0
-    );
-
-
-    const dayName = new Date(`${date}T12:00:00`).toLocaleDateString(
-      'de-DE',
-      {
-        weekday: 'short'
-      }
-    );
-
-
-    const precipitation = daily.precipitation_sum[dayIndex] ?? 0;
-
+    const dayName = new Date(`${date}T12:00:00`).toLocaleDateString('de-DE', { weekday: 'short' });
 
     return {
       date,
       day: dayName,
-
-      tempMax: Math.round(
-        daily.temperature_2m_max[dayIndex]
-      ),
-
-      tempMin: Math.round(
-        daily.temperature_2m_min[dayIndex]
-      ),
-
-      precipitation,
-
+      tempMax: Math.round(daily.temperature_2m_max[dayIndex]),
+      tempMin: Math.round(daily.temperature_2m_min[dayIndex]),
+      precipitation: totalPeriodRain,
+      dayRain: Math.round(dayRain * 10) / 10,
+      nightRain: Math.round(nightRain * 10) / 10,
       dayIcon,
       nightIcon
     };
   });
 });
-
 
 
 </script>
